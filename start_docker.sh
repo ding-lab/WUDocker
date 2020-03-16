@@ -21,6 +21,7 @@ Options:
 -g LSF_ARGS: optional arguments to pass verbatim to bsub.  LSF mode only
 -q LSFQ: queue to use when launching LSF command.  Defaults are research-hpc for SYSTEM = MGI,
    general-interactive for SYSTEM = compute1
+-P: Set LSF_DOCKER_PRESERVE_ENVIRONMENT to false, to prevent mapping of paths on LSF
 
 One or more data_path arguments will map volumes on docker start.  If data_path is PATH_H:PATH_C,
 then PATH_C will map to PATH_H.  If only a single path is given, it is equivalent to PATH_C=PATH_H
@@ -92,7 +93,7 @@ SYSTEM="docker"
 BSUB="bsub"
 DOCKER="docker"
 
-while getopts ":I:hdM:m:L:c:g:q:" opt; do
+while getopts ":I:hdM:m:L:c:g:q:P" opt; do
   case $opt in
     I)
       DOCKER_IMAGE="$OPTARG"
@@ -123,6 +124,9 @@ while getopts ":I:hdM:m:L:c:g:q:" opt; do
       ;;
     q)  
       LSFQ="$OPTARG"
+      ;;
+    P)
+      LSF_ARGS="$LSF_ARGS LSF_DOCKER_PRESERVE_ENVIRONMENT=false"
       ;;
     \?)
       >&2 echo "$SCRIPT: ERROR. Invalid option: -$OPTARG" >&2
