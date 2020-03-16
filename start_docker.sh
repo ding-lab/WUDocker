@@ -126,7 +126,7 @@ while getopts ":I:hdM:m:L:c:g:q:P" opt; do
       LSFQ="$OPTARG"
       ;;
     P)
-      LSF_ARGS="$LSF_ARGS LSF_DOCKER_PRESERVE_ENVIRONMENT=false"
+      PRE_CMD="export LSF_DOCKER_PRESERVE_ENVIRONMENT=false"
       ;;
     \?)
       >&2 echo "$SCRIPT: ERROR. Invalid option: -$OPTARG" >&2
@@ -222,7 +222,10 @@ if [ $INTERACTIVE == 1 ]; then
 fi
 
 if [ $IS_LSF == 1 ]; then
-    ECMD="export LSF_DOCKER_NETWORK=host && export LSF_DOCKER_VOLUMES=\"$PATH_MAP\" "
+    if [ "$PRE_CMD" ]; then
+        PRE_CMD="&& $PRE_CMD"
+    fi
+    ECMD="export LSF_DOCKER_NETWORK=host && export LSF_DOCKER_VOLUMES=\"$PATH_MAP\" $PRE_CMD"
     run_cmd "$ECMD" $DRYRUN
     DCMD="$BSUB $LSFQ $LSF_ARGS $LSF_LOGS -a \"docker($DOCKER_IMAGE)\" $DOCKER_CMD "
 else
