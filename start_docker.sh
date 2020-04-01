@@ -22,6 +22,7 @@ Options:
 -g LSF_ARGS: optional arguments to pass verbatim to bsub.  LSF mode only
 -q LSFQ: queue to use when launching LSF command.  Defaults are research-hpc for SYSTEM = MGI;
    for SYSTEM = compute1, queue is general-interactive and general for interactive and non-interactive jobs, respectively
+-P: Set LSF_DOCKER_PRESERVE_ENVIRONMENT to false, to prevent mapping of paths on LSF
 
 One or more data_path arguments will map volumes on docker start.  If data_path is PATH_H:PATH_C,
 then PATH_C will map to PATH_H.  If only a single path is given, it is equivalent to PATH_C=PATH_H
@@ -96,7 +97,7 @@ RUN_NAME="start_docker.$TIMESTAMP"
 BSUB="bsub"
 DOCKER="docker"
 
-while getopts ":I:hdM:m:L:c:g:q:R:" opt; do
+while getopts ":I:hdM:m:L:c:g:q:R:P:" opt; do
   case $opt in
     I)
       DOCKER_IMAGE="$OPTARG"
@@ -130,6 +131,9 @@ while getopts ":I:hdM:m:L:c:g:q:R:" opt; do
       ;;
     R)  
       RUN_NAME="$OPTARG"
+      ;;
+    P)
+      PRE_CMD="export LSF_DOCKER_PRESERVE_ENVIRONMENT=false"
       ;;
     \?)
       >&2 echo "$SCRIPT: ERROR. Invalid option: -$OPTARG" >&2
@@ -229,7 +233,10 @@ if [ $INTERACTIVE == 1 ]; then
 fi
 
 if [ $IS_LSF == 1 ]; then
-    ECMD="export LSF_DOCKER_NETWORK=host && export LSF_DOCKER_VOLUMES=\"$PATH_MAP\" "
+    if [ "$PRE_CMD" ]; then
+        PRE_CMD="&& $PRE_CMD"
+    fi
+    ECMD="export LSF_DOCKER_NETWORK=host && export LSF_DOCKER_VOLUMES=\"$PATH_MAP\" $PRE_CMD"
     run_cmd "$ECMD" $DRYRUN
     DCMD="$BSUB $LSFQ $LSF_ARGS $LSF_LOGS -a \"docker($DOCKER_IMAGE)\" $DOCKER_CMD "
 else
