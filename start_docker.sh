@@ -17,10 +17,11 @@ Options:
 -m MEM_GB: request given memory resources on launch
     ** TODO ** this is not implemented
 -c DOCKER_CMD: run given command in non-interactive mode.  Default is to run /bin/bash in interactive mode
--L LOGD: Log directory on host.  Logs are written to $LOGD_H/log/*.[err|out] for non-interactive mode only
+-L LOGD: Log directory on host.  Logs are written to $LOGD/log/RUN_NAME.[err|out] (non-interactive mode).  Default: ./logs
+-R RUN_NAME: specify base name of log output.  Default is start_docker.TIMESTAMP
 -g LSF_ARGS: optional arguments to pass verbatim to bsub.  LSF mode only
--q LSFQ: queue to use when launching LSF command.  Defaults are research-hpc for SYSTEM = MGI,
-   general-interactive for SYSTEM = compute1
+-q LSFQ: queue to use when launching LSF command.  Defaults are research-hpc for SYSTEM = MGI;
+   for SYSTEM = compute1, queue is general-interactive and general for interactive and non-interactive jobs, respectively
 
 One or more data_path arguments will map volumes on docker start.  If data_path is PATH_H:PATH_C,
 then PATH_C will map to PATH_H.  If only a single path is given, it is equivalent to PATH_C=PATH_H
@@ -88,11 +89,14 @@ DOCKER_CMD="/bin/bash"
 INTERACTIVE=1
 WRITE_LOGS=0
 SYSTEM="docker"
+LOGD="./logs"
+TIMESTAMP=$(date "+%Y.%m.%d-%H.%M.%S")
+RUN_NAME="start_docker.$TIMESTAMP"
 
 BSUB="bsub"
 DOCKER="docker"
 
-while getopts ":I:hdM:m:L:c:g:q:" opt; do
+while getopts ":I:hdM:m:L:c:g:q:R:" opt; do
   case $opt in
     I)
       DOCKER_IMAGE="$OPTARG"
@@ -124,6 +128,9 @@ while getopts ":I:hdM:m:L:c:g:q:" opt; do
     q)  
       LSFQ="$OPTARG"
       ;;
+    R)  
+      RUN_NAME="$OPTARG"
+      ;;
     \?)
       >&2 echo "$SCRIPT: ERROR. Invalid option: -$OPTARG" >&2
       >&2 echo "$USAGE"
@@ -151,7 +158,11 @@ elif [ $SYSTEM == "MGI" ]; then
     LSFQ_DEFAULT="-q research-hpc"  
     IS_LSF=1
 elif [ $SYSTEM == "compute1" ]; then
-    LSFQ_DEFAULT="-q general-interactive"  
+    if [ "$INTERACTIVE" == 1 ]; then
+        LSFQ_DEFAULT="-q general-interactive"  
+    else
+        LSFQ_DEFAULT="-q general"  
+    fi
     IS_LSF=1
 else
     >&2 echo ERROR: Unknown SYSTEM: $SYSTEM
@@ -194,10 +205,10 @@ do
 done
 
 if [ $WRITE_LOGS == 1 ]; then
-    mkdir -p $LOGD
+    run_cmd "mkdir -p $LOGD" $DRYRUN
     test_exit_status
-    ERRLOG="$LOGD/${UUID}.err"
-    OUTLOG="$LOGD/${UUID}.out"
+    ERRLOG="$LOGD/${RUN_NAME}.err"
+    OUTLOG="$LOGD/${RUN_NAME}.out"
     >&2 echo Output logs written to: $OUTLOG and $ERRLOG
     rm -f $ERRLOG $OUTLOG
 
