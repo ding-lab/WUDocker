@@ -39,6 +39,8 @@ General purpose docker launcher with the following features:
   - arbitrary LSF arguments
 EOF
 
+# NOTE: if the documentation above is updated, please update READM.md as well
+
 function test_exit_status {
     # Evaluate return value for chain of pipes; see https://stackoverflow.com/questions/90418/exit-shell-script-based-on-process-exit-code
     rcs=${PIPESTATUS[*]};
