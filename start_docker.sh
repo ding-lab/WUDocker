@@ -47,7 +47,7 @@ function test_exit_status {
     for rc in ${rcs}; do
         if [[ $rc != 0 ]]; then
             NOW=$(date)
-            >&2 echo [ $NOW ] $SCRIPT Fatal ERROR.  Exiting.
+            >&2 echo [ $NOW ] $SCRIPT Fatal ERROR \($rc\).  Exiting.
             exit $rc;
         fi;
     done
@@ -99,7 +99,7 @@ RUN_NAME="start_docker.$TIMESTAMP"
 BSUB="bsub"
 DOCKER="docker"
 
-while getopts ":I:hdM:m:L:c:g:q:R:P:" opt; do
+while getopts ":I:hdM:m:L:c:g:q:R:P" opt; do
   case $opt in
     I)
       DOCKER_IMAGE="$OPTARG"
