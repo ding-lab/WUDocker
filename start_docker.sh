@@ -14,8 +14,7 @@ Options:
 -h: show help
 -d: dry run.  print out docker statement but do not execute
 -M SYSTEM: Available systems: MGI, compute1, docker.  Default: docker
--m MEM_GB: request given memory resources on launch
-    ** TODO ** this is not implemented
+-m MEM_GB: request given memory resources on launch.  Not implemented yet for SYSTEM=docker
 -c DOCKER_CMD: run given command in non-interactive mode.  Default is to run /bin/bash in interactive mode
 -L LOGD: Log directory on host.  Logs are written to $LOGD/log/RUN_NAME.[err|out] (non-interactive mode).  Default: ./logs
 -R RUN_NAME: specify base name of log output.  Default is start_docker.TIMESTAMP
@@ -179,6 +178,22 @@ if [ $IS_LSF == 1 ] && [ -z $LSFQ ]; then
     LSFQ=$LSFQ_DEFAULT
 fi
 
+if [ $MEM_GB ]; then
+    if [ $IS_LSF == 1 ]; then
+        SELECT="select[mem>$(( $MEM_GB * 1000 ))] rusage[mem=$(( $MEM_GB * 1000 ))]";
+        # -M argument takes kb at MGI, mb in compute1
+        if [ $SYSTEM == "MGI" ]; then 
+            M_ARG=$(( $MEM_GB * 1000000 ))
+        else 
+            M_ARG=$(( $MEM_GB * 1000 ))
+        fi
+        MEM_ARGS="-M $M_ARG -R \"$SELECT\""
+    else
+        >&2 echo WARNING: MEM_GB not implemented yet for system = docker.  Ignoring 
+        MEM_ARGS=""
+    fi
+fi
+
 PATH_MAP=""
 # Loop over all arguments, host directories which will be mapped to container directories
 for DP in "$@"
@@ -240,7 +255,7 @@ if [ $IS_LSF == 1 ]; then
     fi
     ECMD="export LSF_DOCKER_NETWORK=host && export LSF_DOCKER_VOLUMES=\"$PATH_MAP\" $PRE_CMD"
     run_cmd "$ECMD" $DRYRUN
-    DCMD="$BSUB $LSFQ $LSF_ARGS $LSF_LOGS -a \"docker($DOCKER_IMAGE)\" $DOCKER_CMD "
+    DCMD="$BSUB $LSFQ $LSF_ARGS $LSF_LOGS $MEM_ARGS -a \"docker($DOCKER_IMAGE)\" $DOCKER_CMD "
 else
     DCMD="$DOCKER run $DOCKER_ARGS $PATH_MAP $DOCKER_IMAGE $DOCKER_CMD $LOG_REDIRECT"
 fi
