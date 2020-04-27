@@ -22,6 +22,9 @@ Options:
 -q LSFQ: queue to use when launching LSF command.  Defaults are research-hpc for SYSTEM = MGI;
    for SYSTEM = compute1, queue is general-interactive and general for interactive and non-interactive jobs, respectively
 -P: Set LSF_DOCKER_PRESERVE_ENVIRONMENT to false, to prevent mapping of paths on LSF
+-e ENV: sent environment variable as passed to `docker --env`.  Can be set multiple times.
+    Example: -e VAR1=value1 -e VAR2=value2
+    This is not fully implemented, see source for details
 
 One or more data_path arguments will map volumes on docker start.  If data_path is PATH_H:PATH_C,
 then PATH_C will map to PATH_H.  If only a single path is given, it is equivalent to PATH_C=PATH_H
@@ -38,7 +41,14 @@ General purpose docker launcher with the following features:
   - arbitrary LSF arguments
 EOF
 
-# NOTE: if the documentation above is updated, please update READM.md as well
+# Note on -e ENV flag
+#  Docker implementation based on documentation here:
+#    https://docs.docker.com/engine/reference/commandline/run/#set-environment-variables--e---env---env-file
+#  has not yet been defined for LSF.  Suggestion about env params on LSF from Tom Mooney:
+#    If you don’t use LSF_DOCKER_PRESERVE_ENVIRONMENT=false, the LSF job will inherit all of your current environment variables
+#   Follow implementation like that for e.g., export LSF_DOCKER_NETWORK=host
+
+# NOTE: if the documentation above is updated, please update README.md as well
 
 function test_exit_status {
     # Evaluate return value for chain of pipes; see https://stackoverflow.com/questions/90418/exit-shell-script-based-on-process-exit-code
@@ -94,11 +104,12 @@ SYSTEM="docker"
 LOGD="./logs"
 TIMESTAMP=$(date "+%Y.%m.%d-%H.%M.%S")
 RUN_NAME="start_docker.$TIMESTAMP"
+DOCKER_ARGS=""
 
 BSUB="bsub"
 DOCKER="docker"
 
-while getopts ":I:hdM:m:L:c:g:q:R:P" opt; do
+while getopts ":I:hdM:m:L:c:g:q:R:Pe:" opt; do
   case $opt in
     I)
       DOCKER_IMAGE="$OPTARG"
@@ -135,6 +146,14 @@ while getopts ":I:hdM:m:L:c:g:q:R:P" opt; do
       ;;
     P)
       PRE_CMD="export LSF_DOCKER_PRESERVE_ENVIRONMENT=false"
+      ;;
+    e)  
+      # https://docs.docker.com/engine/reference/commandline/run/#set-environment-variables--e---env---env-file
+      # for docker, just add additional arguments
+      DOCKER_ARGS="$DOCKER_ARGS --env $OPTARG"
+      # for LSF implementation, add environment variables...
+      # this needs to be adjusted for multiple....  continue implemenation here
+      LSF_ENV="export $OPT_ARG"
       ;;
     \?)
       >&2 echo "$SCRIPT: ERROR. Invalid option: -$OPTARG" >&2
