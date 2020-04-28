@@ -36,6 +36,7 @@ General purpose docker launcher with the following features:
   - dryrun
   - run bash or given command line
   - arbitrary LSF arguments
+  - environment variables
 EOF
 
 # NOTE: if the documentation above is updated, please update READM.md as well
