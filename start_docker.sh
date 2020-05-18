@@ -17,6 +17,7 @@ Options:
 -m MEM_GB: request given memory resources on launch.  Not implemented yet for SYSTEM=docker
 -c DOCKER_CMD: run given command in non-interactive mode.  Default is to run /bin/bash in interactive mode
 -L LOGD: Log directory on host.  Logs are written to $LOGD/log/RUN_NAME.[err|out] (non-interactive mode).  Default: ./logs
+-l: Write all logs to stderr/stdout
 -R RUN_NAME: specify base name of log output.  Default is start_docker.TIMESTAMP
 -g LSF_ARGS: optional arguments to pass verbatim to bsub.  LSF mode only
 -q LSFQ: queue to use when launching LSF command.  Defaults are research-hpc for SYSTEM = MGI;
@@ -100,7 +101,6 @@ SCRIPT=$(basename $0)
 LSF_ARGS=""
 DOCKER_CMD="/bin/bash"
 INTERACTIVE=1
-WRITE_LOGS=0
 SYSTEM="docker"
 LOGD="./logs"
 TIMESTAMP=$(date "+%Y.%m.%d-%H.%M.%S")
@@ -110,7 +110,7 @@ DOCKER_ARGS=""
 BSUB="bsub"
 DOCKER="docker"
 
-while getopts ":I:hdM:m:L:c:g:q:R:Pe:" opt; do
+while getopts ":I:hdM:m:L:c:g:q:R:Pe:l" opt; do
   case $opt in
     I)
       DOCKER_IMAGE="$OPTARG"
@@ -134,7 +134,6 @@ while getopts ":I:hdM:m:L:c:g:q:R:Pe:" opt; do
     c)
       DOCKER_CMD="$OPTARG"
       INTERACTIVE=0
-      WRITE_LOGS=1
       ;;    
     g)
       LSF_ARGS="$LSF_ARGS $OPTARG"
@@ -147,6 +146,9 @@ while getopts ":I:hdM:m:L:c:g:q:R:Pe:" opt; do
       ;;
     P)
       PRE_CMD="export LSF_DOCKER_PRESERVE_ENVIRONMENT=false"
+      ;;
+    l)
+      WRITE_LOGS=0
       ;;
     e)  
       # https://docs.docker.com/engine/reference/commandline/run/#set-environment-variables--e---env---env-file
@@ -211,6 +213,15 @@ if [ $MEM_GB ]; then
     else
         >&2 echo WARNING: MEM_GB not implemented yet for system = docker.  Ignoring 
         MEM_ARGS=""
+    fi
+fi
+
+# Interactive jobs write logs unless overridden with -l
+if [ -z $WRITE_LOGS ]; then
+    if [ "$INTERACTIVE" == 0 ]; then
+        WRITE_LOGS=1
+    else
+        WRITE_LOGS=0
     fi
 fi
 
