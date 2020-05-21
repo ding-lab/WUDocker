@@ -221,8 +221,14 @@ do
     # Each data path DP consists of one or two paths separated by :
     # If 2 paths, they are PATH_H:PATH_C
     # If 1 path, define PATH_C = PATH_H
-    PATH_H=$(echo "$DP" | cut -f 1 -d :)
-    PATH_C=$(echo "$DP" | cut -f 2 -d :)
+    PATH_H=$(echo "$DP" | cut -f 1 -d : -s)
+    PATH_C=$(echo "$DP" | cut -f 2 -d : -s)
+
+    # cut -s supresses output of lines with no matching delimiters
+    # In this case, assume 1 path specified
+    if [ -z $PATH_H ]; then
+        PATH_H="$DP"
+    fi
 
     if [ ! -d $PATH_H ]; then
         >&2 echo ERROR: $PATH_H is not an existing directory
