@@ -26,6 +26,7 @@ Options:
 -e ENV: sent environment variable as passed to `docker --env`.  Can be set multiple times.
     Example: -e VAR1=value1 -e VAR2=value2
     This is not fully implemented, see source for details
+-A: Do not convert host data paths (PATH_H) to absolute paths
 
 One or more data_path arguments will map volumes on docker start.  If data_path is PATH_H:PATH_C,
 then PATH_C will map to PATH_H.  If only a single path is given, it is equivalent to PATH_C=PATH_H
@@ -110,7 +111,7 @@ DOCKER_ARGS=""
 BSUB="bsub"
 DOCKER="docker"
 
-while getopts ":I:hdM:m:L:c:g:q:R:Pe:l" opt; do
+while getopts ":I:hdM:m:L:c:g:q:R:Pe:lA" opt; do
   case $opt in
     I)
       DOCKER_IMAGE="$OPTARG"
@@ -157,6 +158,9 @@ while getopts ":I:hdM:m:L:c:g:q:R:Pe:l" opt; do
       # for LSF implementation, add environment variables...
       # this needs to be adjusted for multiple....  continue implemenation here
       LSF_ENV="export $OPT_ARG"
+      ;;
+    A)
+      NO_ABS=1
       ;;
     \?)
       >&2 echo "$SCRIPT: ERROR. Invalid option: -$OPTARG" >&2
@@ -246,9 +250,14 @@ do
         exit 1
     fi
 
-    # Using python to get absolute path of DATDH.  On Linux `readlink -f` works, but on Mac this is not always available
-    # see https://stackoverflow.com/questions/1055671/how-can-i-get-the-behavior-of-gnus-readlink-f-on-a-mac
-    ABS_PATH_H=$(python -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' $PATH_H)
+    # NO_ABS option added for situations on compute1 where absolute paths obtained on one system may not be available on other systems
+    if [ -z $NO_ABS ]; then
+        # Using python to get absolute path of DATDH.  On Linux `readlink -f` works, but on Mac this is not always available
+        # see https://stackoverflow.com/questions/1055671/how-can-i-get-the-behavior-of-gnus-readlink-f-on-a-mac
+        ABS_PATH_H=$(python -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' $PATH_H)
+    else
+        ABS_PATH_H=$PATH_H
+    fi
 
     if [ -z $PATH_C ]; then
         PATH_C=$ABS_PATH_H
