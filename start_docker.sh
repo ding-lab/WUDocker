@@ -27,9 +27,13 @@ Options:
     Example: -e VAR1=value1 -e VAR2=value2
     This is not fully implemented, see source for details
 -A: Do not convert host data paths (PATH_H) to absolute paths
+-r: remap paths /rdcw/ to /storage1/ 
 
 One or more data_path arguments will map volumes on docker start.  If data_path is PATH_H:PATH_C,
 then PATH_C will map to PATH_H.  If only a single path is given, it is equivalent to PATH_C=PATH_H
+
+Remapping paths /rdcw/ to /storage1/ allows paths obtained with `readlink` on a compute client
+to be used on cache layer machines.
 
 General purpose docker launcher with the following features:
 * Aware of MGI, compute, docker environments
@@ -111,7 +115,7 @@ DOCKER_ARGS=""
 BSUB="bsub"
 DOCKER="docker"
 
-while getopts ":I:hdM:m:L:c:g:q:R:Pe:lA" opt; do
+while getopts ":I:hdM:m:L:c:g:q:R:Pe:lAr" opt; do
   case $opt in
     I)
       DOCKER_IMAGE="$OPTARG"
@@ -161,6 +165,9 @@ while getopts ":I:hdM:m:L:c:g:q:R:Pe:lA" opt; do
       ;;
     A)
       NO_ABS=1
+      ;;
+    r)
+      REMAP_PATHS=1
       ;;
     \?)
       >&2 echo "$SCRIPT: ERROR. Invalid option: -$OPTARG" >&2
@@ -238,6 +245,11 @@ do
     # If 1 path, define PATH_C = PATH_H
     PATH_H=$(echo "$DP" | cut -f 1 -d : -s)
     PATH_C=$(echo "$DP" | cut -f 2 -d : -s)
+
+    if [ "$REMAP_PATHS" ]; then
+        PATH_H=$(echo "$PATH_H" | sed 's/rdcw/storage1/')
+        PATH_C=$(echo "$PATH_C" | sed 's/rdcw/storage1/')
+    fi
 
     # cut -s supresses output of lines with no matching delimiters
     # In this case, assume 1 path specified
