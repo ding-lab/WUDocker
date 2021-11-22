@@ -144,7 +144,7 @@ while getopts ":I:hdM:m:L:c:g:q:R:Pe:lAr" opt; do
       LSF_ARGS="$LSF_ARGS $OPTARG"
       ;;
     q)  
-      LSFQ="$OPTARG"
+      LSFQ="-q $OPTARG"
       ;;
     R)  
       RUN_NAME="$OPTARG"
