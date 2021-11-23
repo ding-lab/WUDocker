@@ -207,7 +207,7 @@ else
     >&2 echo "$USAGE"
     exit 1
 fi
-if [ $IS_LSF == 1 ] && [ -z $LSFQ ]; then
+if [ $IS_LSF == 1 ] && [ -z "$LSFQ" ]; then
     LSFQ=$LSFQ_DEFAULT
 fi
 
