@@ -240,10 +240,11 @@ PATH_MAP=""
 # Loop over all arguments, host directories which will be mapped to container directories
 for DP in "$@"
 do
+    # cut -s supresses output of lines with no matching delimiters
     # Each data path DP consists of one or two paths separated by :
     # If 2 paths, they are PATH_H:PATH_C
     # If 1 path, define PATH_C = PATH_H
-    PATH_H=$(echo "$DP" | cut -f 1 -d : -s)
+    PATH_H=$(echo "$DP" | cut -f 1 -d : )
     PATH_C=$(echo "$DP" | cut -f 2 -d : -s)
 
     if [ "$REMAP_PATHS" ]; then
@@ -251,7 +252,6 @@ do
         PATH_C=$(echo "$PATH_C" | sed 's/rdcw/storage1/')
     fi
 
-    # cut -s supresses output of lines with no matching delimiters
     # In this case, assume 1 path specified
     if [ -z $PATH_H ]; then
         PATH_H="$DP"
