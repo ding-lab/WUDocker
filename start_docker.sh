@@ -247,10 +247,6 @@ do
     PATH_H=$(echo "$DP" | cut -f 1 -d : )
     PATH_C=$(echo "$DP" | cut -f 2 -d : -s)
 
-    if [ "$REMAP_PATHS" ]; then
-        PATH_H=$(echo "$PATH_H" | sed 's/rdcw/storage1/')
-        PATH_C=$(echo "$PATH_C" | sed 's/rdcw/storage1/')
-    fi
 
     # In this case, assume 1 path specified
     if [ -z $PATH_H ]; then
@@ -273,6 +269,11 @@ do
 
     if [ -z $PATH_C ]; then
         PATH_C=$ABS_PATH_H
+    fi
+
+    if [ "$REMAP_PATHS" ]; then
+        ABS_PATH_H=$(echo "$ABS_PATH_H" | sed 's/rdcw/storage1/')
+        PATH_C=$(echo "$PATH_C" | sed 's/rdcw/storage1/')
     fi
 
     >&2 echo Mapping $PATH_C to $ABS_PATH_H

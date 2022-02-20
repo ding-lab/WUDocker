@@ -21,14 +21,23 @@ Options:
 -m MEM_GB: request given memory resources on launch.  Not implemented yet for SYSTEM=docker
 -c DOCKER_CMD: run given command in non-interactive mode.  Default is to run /bin/bash in interactive mode
 -L LOGD: Log directory on host.  Logs are written to $LOGD/log/RUN_NAME.[err|out] (non-interactive mode).  Default: ./logs
+-l: Write all logs to stderr/stdout
 -R RUN_NAME: specify base name of log output.  Default is start_docker.TIMESTAMP
 -g LSF_ARGS: optional arguments to pass verbatim to bsub.  LSF mode only
 -q LSFQ: queue to use when launching LSF command.  Defaults are research-hpc for SYSTEM = MGI;
    for SYSTEM = compute1, queue is general-interactive and general for interactive and non-interactive jobs, respectively
 -P: Set LSF_DOCKER_PRESERVE_ENVIRONMENT to false, to prevent mapping of paths on LSF
+-e ENV: sent environment variable as passed to `docker --env`.  Can be set multiple times.
+    Example: -e VAR1=value1 -e VAR2=value2
+    This is not fully implemented, see source for details
+-A: Do not convert host data paths (PATH_H) to absolute paths
+-r: remap paths /rdcw/ to /storage1/ 
 
 One or more data_path arguments will map volumes on docker start.  If data_path is PATH_H:PATH_C,
 then PATH_C will map to PATH_H.  If only a single path is given, it is equivalent to PATH_C=PATH_H
+
+Remapping paths /rdcw/ to /storage1/ allows paths obtained with `readlink` on a compute client
+to be used on cache layer machines.
 
 General purpose docker launcher with the following features:
 * Aware of MGI, compute, docker environments
