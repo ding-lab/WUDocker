@@ -272,8 +272,10 @@ do
     fi
 
     if [ "$REMAP_PATHS" ]; then
-        ABS_PATH_H=$(echo "$ABS_PATH_H" | sed 's/rdcw/storage1/')
-        PATH_C=$(echo "$PATH_C" | sed 's/rdcw/storage1/')
+#        ABS_PATH_H=$(echo "$ABS_PATH_H" | sed 's/rdcw/storage1/')
+#        PATH_C=$(echo "$PATH_C" | sed 's/rdcw/storage1/')
+        ABS_PATH_H=$(echo "$ABS_PATH_H" | sed 's!rdcw/fs1!storage1/fs1!')
+        PATH_C=$(echo "$PATH_C" | sed 's!rdcw/fs1!storage1/fs1!')
     fi
 
     >&2 echo Mapping $PATH_C to $ABS_PATH_H
